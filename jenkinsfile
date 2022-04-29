@@ -1,11 +1,12 @@
 pipeline {
      environment {
-       IMAGE_NAME = "static-website-example"
+       ID_DOCKER = "aabderrezak"
+       IMAGE_NAME = "static-website-ib"
        IMAGE_TAG = "v1"
-       STAGING = "aabderrezak-staging"
-       /*PRODUCTION = "aabderrezak-production" */
-       ID_DOCKER="aabderrezak"
-       DOCKER_PASSWORD=credentials('dockerhubpassword') 
+/*       STAGING = "${ID_DOCKER}-staging"
+       PRODUCTION = "${ID_DOCKER}-production"
+*/       
+       DOCKERHUB_PASSWORD = credentials('dockerhubpassword')
      }
      agent none
      stages {
@@ -13,7 +14,7 @@ pipeline {
              agent any
              steps {
                 script {
-                  sh 'docker build -t aabderrezak/$IMAGE_NAME:$IMAGE_TAG .'
+                  sh 'docker build -t ${ID_DOCKER}/$IMAGE_NAME:$IMAGE_TAG .'
                 }
              }
         }
@@ -22,7 +23,7 @@ pipeline {
             steps {
                script {
                  sh '''
-                    docker run --name $IMAGE_NAME -d -p 80:80 -e PORT=80 aabderrezak/$IMAGE_NAME:$IMAGE_TAG
+                    docker run --name $IMAGE_NAME -d -p 80:80 -e PORT=80 ${ID_DOCKER}/$IMAGE_NAME:$IMAGE_TAG
                     sleep 5
                  '''
                }
@@ -34,7 +35,6 @@ pipeline {
               script {
                 sh '''
                     curl http://jenkins | grep -i "dimension"
-                    
                 '''
               }
            }
@@ -50,8 +50,8 @@ pipeline {
              }
           }
      }
-
-    stage ('Login and Push Image on docker hub') {
+     
+     stage ('Login and Push Image on docker hub') {
           agent any
           steps {
              script {
@@ -61,9 +61,10 @@ pipeline {
                '''
              }
           }
-      }
-
-stage('Push image in staging and deploy it') {
+      }     
+     
+     
+     stage('Push image in staging and deploy it') {
        when {
               expression { GIT_BRANCH == 'origin/master' }
             }
@@ -76,9 +77,7 @@ stage('Push image in staging and deploy it') {
           }
         }
      }
-
-
-      stage('Push image in production and deploy it') {
+     stage('Push image in production and deploy it') {
        when {
               expression { GIT_BRANCH == 'origin/master' }
             }
